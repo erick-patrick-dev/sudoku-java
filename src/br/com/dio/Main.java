@@ -2,6 +2,7 @@ package br.com.dio;
 
 import br.com.dio.model.Board;
 import br.com.dio.model.Space;
+import br.com.dio.util.BoardTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.Scanner;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static br.com.dio.util.BoardTemplate.BOARD_TEMPLATE;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
@@ -47,7 +49,7 @@ public class Main {
                 case 1 -> startGame(positions);
                 case 2 -> inputNumber();
                 case 3 -> removeNumber();
-                case 4 -> showCurrentGane();
+                case 4 -> showCurrentGame();
                 case 5 -> showGameStatus();
                 case 6 -> clearGame();
                 case 7 -> finishGame();
@@ -80,10 +82,7 @@ public class Main {
     }
 
     private static void inputNumber() {
-        if (isNull(board)){
-            System.out.println("O jogo ainda não foi iniciado");
-            return;
-        }
+        if (gameIsNull()) return;
 
         System.out.println("Informe a coluna que o número será inserido");
         var col = runUnitGetValidNumber(0, 8);
@@ -100,10 +99,7 @@ public class Main {
     }
 
     private static void removeNumber() {
-        if (isNull(board)){
-            System.out.println("O jogo ainda não foi iniciado");
-            return;
-        }
+        if (gameIsNull()) return;
 
         System.out.println("Informe a coluna que o número será removido");
         var col = runUnitGetValidNumber(0, 8);
@@ -111,22 +107,76 @@ public class Main {
         System.out.println("Informe a linha que o número será removido");
         var row = runUnitGetValidNumber(0, 8);
 
-        System.out.printf("Informe o número que vai entrar na posição [%s, %s]\n", col, row);
         if (!board.clearValue(col, row)){
             System.out.printf("A posição [%S, %s] tem um valor fixo\n", col, row);
         }
     }
 
-    private static void finishGame() {
-    }
+    private static void showCurrentGame() {
+        if (gameIsNull()) return;
 
-    private static void clearGame() {
+        var args = new Object[81];
+        var argPos = 0;
+
+        for (int i = 0; i < BOARD_LIMIT; i++) {
+            for (var col: board.getSpaces()){
+                args[argPos++] = " " + (isNull(col.get(i).getActual() ) ? " " : col.get(i).getActual());
+            }
+        }
+
+        System.out.println("Seu jogo se encontra da seguinte forma");
+        System.out.printf((BOARD_TEMPLATE) + "%n", args);
     }
 
     private static void showGameStatus() {
+        if (gameIsNull()) return;
+
+        System.out.printf("O jogo atualmente se encontra no status %s\n", board.getStatus().getLabel());
+        if (board.hasErrors()){
+            System.out.println("O jogo contém erros");
+        } else {
+            System.out.println("O jogo não contém erros");
+        }
     }
 
-    private static void showCurrentGane() {
+    private static void clearGame() {
+        if (gameIsNull()) return;
+
+        System.out.println("Tem certeza que deseja limpar seu jogo e perder todo seu progresso? (sim/não)");
+        var confirm = scanner.next();
+        while (!confirm.equalsIgnoreCase("sim") && !confirm.equalsIgnoreCase("não")){
+            System.out.println("Informe 'sim' ou 'não'");
+            confirm = scanner.next();
+        }
+
+        if (confirm.equalsIgnoreCase("sim")){
+            board.reset();
+        }
+    }
+
+    private static void finishGame() {
+        if (gameIsNull()) return;
+
+        if (board.gameIsFinished()){
+            System.out.println("Parabéns, você concluiu o jogo");
+            showCurrentGame();
+            board = null;
+        } else if (board.hasErrors()) {
+            System.out.println("Seu jogo contém erros. Verifique seu board e ajuste-o");
+        } else {
+            System.out.println("Você ainda precisa preencher algum espaço");
+        }
+    }
+
+
+
+
+    private static boolean gameIsNull() {
+        if (isNull(board)){
+            System.out.println("O jogo ainda não foi iniciado\n");
+            return true;
+        }
+        return false;
     }
 
 
